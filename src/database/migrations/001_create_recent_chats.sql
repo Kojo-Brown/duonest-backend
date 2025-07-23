@@ -1,0 +1,11 @@
+CREATE TABLE IF NOT EXISTS recent_chats (
+    id SERIAL PRIMARY KEY,
+    user_id VARCHAR(255) NOT NULL,
+    room_id VARCHAR(255) NOT NULL,
+    room_name VARCHAR(255),
+    last_visited TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    participant_count INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
