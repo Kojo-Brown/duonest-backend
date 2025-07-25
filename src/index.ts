@@ -59,19 +59,12 @@ app.use(
 
 const io = new Server(server, {
   cors: {
-    origin: process.env.NODE_ENV === 'production' 
-      ? ["https://duonest-frontend.vercel.app", "https://duonest-frontend-git-main-kojo-browns-projects.vercel.app", "https://duonest-frontend-git-dev-kojo-browns-projects.vercel.app"]
-      : [
-          "http://localhost:3000",
-          "http://localhost:5173", 
-          "http://localhost:5174",
-          "https://duonest-frontend.vercel.app",
-        ],
+    origin: "*", // Allow all origins for debugging
     methods: ["GET", "POST"],
-    credentials: true,
+    credentials: false, // Set to false for wildcard origin
   },
   allowEIO3: true, // Allow Engine.IO v3 clients
-  transports: ['websocket', 'polling'], // Enable both transports
+  transports: ['polling', 'websocket'], // Try polling first
 });
 
 // Security middleware with relaxed CORP for uploads
@@ -155,9 +148,22 @@ app.get("/", (req, res) => {
   });
 });
 
-// Socket.IO connection handling
+// Socket.IO error handling
+io.engine.on("connection_error", (err) => {
+  console.log("❌ CONNECTION ERROR:", err.req);
+  console.log("❌ ERROR CODE:", err.code);
+  console.log("❌ ERROR MESSAGE:", err.message);
+  console.log("❌ ERROR CONTEXT:", err.context);
+});
+
+// Socket.IO connection handling  
 io.on("connection", (socket) => {
-  console.log(`User connected: ${socket.id}`);
+  console.log(`🔌 WEBSOCKET CONNECTED: ${socket.id}`);
+  console.log(`🌐 Origin: ${socket.handshake.headers.origin}`);
+  console.log(`🚀 Transport: ${socket.conn.transport.name}`);
+  
+  // Test immediate response
+  socket.emit("connection-confirmed", { socketId: socket.id, timestamp: Date.now() });
 
   // User identification and presence
   socket.on("identify-user", (userId) => {
