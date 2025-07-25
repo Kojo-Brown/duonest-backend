@@ -24,6 +24,12 @@ import "./types/socket.js";
 dotenv.config();
 
 const app = express();
+
+// Trust proxy for Railway deployment
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
+
 const server = createServer(app);
 const PORT = process.env.PORT || 3000;
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -228,11 +234,20 @@ io.on("connection", (socket) => {
     // Send online status of room participants only if roomId is valid
     if (roomId !== "undefined" && roomId !== undefined) {
       try {
+        // First validate that room exists
+        const roomExists = await query('SELECT room_id FROM couple_rooms WHERE room_id = $1', [roomId]);
+        if (roomExists.rows.length === 0) {
+          console.log(`⚠️  User trying to join non-existent room: ${roomId}`);
+          socket.emit("room-error", { error: "Room does not exist" });
+          return;
+        }
+        
         const roomUsers = await PresenceService.getUsersInRoom(roomId);
         const onlineUsers = roomUsers.filter((id) =>
           PresenceService.isUserOnline(id)
         );
         socket.emit("room-users-status", { roomId, onlineUsers });
+        console.log(`👥 Room ${roomId} users: ${roomUsers.join(', ')}, online: ${onlineUsers.join(', ')}`);
       } catch (error) {
         console.error("Error getting room users:", error);
       }
@@ -290,6 +305,16 @@ io.on("connection", (socket) => {
         });
         socket.emit("message-error", {
           error: "Missing required message data",
+        });
+        return;
+      }
+
+      // Validate room exists before saving message
+      const roomExists = await query('SELECT room_id FROM couple_rooms WHERE room_id = $1', [roomId]);
+      if (roomExists.rows.length === 0) {
+        console.error(`❌ Room ${roomId} does not exist`);
+        socket.emit("message-error", {
+          error: "Room does not exist",
         });
         return;
       }
