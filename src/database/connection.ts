@@ -1,9 +1,9 @@
 import { Pool, PoolConfig } from "pg";
-import * as dotenv from "dotenv";
 
 // Only load .env in development, not in production
 if (process.env.NODE_ENV !== "production") {
-  dotenv.config();
+  const { config } = await import("dotenv");
+  config();
 }
 
 // Add debug logging to see what variables are available

@@ -1,12 +1,12 @@
 {
   "name": "duonest",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/index.js",
   "type": "module",
   "scripts": {
-    "build": "npx tsc",
+    "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "npx tsx --watch src/index.ts"
+    "dev": "tsx --watch src/index.ts"
   },
   "keywords": [],
   "author": "",
@@ -20,15 +20,15 @@
     "@types/helmet": "^0.0.48",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/morgan": "^1.9.10",
+    "@types/multer": "^2.0.0",
     "@types/node": "^24.0.15",
+    "@types/pg": "^8.15.4",
     "@types/socket.io": "^3.0.1",
     "@types/uuid": "^10.0.0",
     "nodemon": "^3.1.10",
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@types/multer": "^2.0.0",
-    "@types/pg": "^8.15.4",
     "bcryptjs": "^3.0.2",
     "compression": "^1.8.1",
     "cors": "^2.8.5",
@@ -43,5 +43,8 @@
     "pg": "^8.16.3",
     "socket.io": "^4.8.1",
     "uuid": "^11.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
