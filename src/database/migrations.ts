@@ -1,5 +1,5 @@
-import { readFileSync } from 'fs';
-import { join, dirname } from 'path';
+import { readFileSync, existsSync } from 'fs';
+import { join, dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { query } from './connection.js';
 
@@ -63,7 +63,27 @@ export class DatabaseMigrations {
         await this.createLiveTypingLogsTable();
       } else {
         // Read migration file for other migrations
-        const migrationPath = join(__dirname, 'migrations', filename);
+        // Try multiple possible paths to handle different execution environments
+        const possiblePaths = [
+          join(__dirname, 'migrations', filename),
+          join(__dirname, '..', 'database', 'migrations', filename),
+          join(process.cwd(), 'dist', 'database', 'migrations', filename),
+          join(process.cwd(), 'src', 'database', 'migrations', filename)
+        ];
+        
+        let migrationPath: string | null = null;
+        for (const path of possiblePaths) {
+          if (existsSync(path)) {
+            migrationPath = path;
+            break;
+          }
+        }
+        
+        if (!migrationPath) {
+          throw new Error(`Migration file ${filename} not found. Tried paths: ${possiblePaths.join(', ')}`);
+        }
+        
+        console.log(`📁 Reading migration from: ${migrationPath}`);
         const migrationSQL = readFileSync(migrationPath, 'utf8');
         await query(migrationSQL);
       }
