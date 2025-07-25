@@ -78,4 +78,4 @@ temp/
 .yarn-integrity
 
 # Schema backup files
-schema_fixed.sql
+schema_fixed.sqluploads/
