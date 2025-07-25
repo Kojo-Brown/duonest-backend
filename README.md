@@ -9,7 +9,7 @@ A real-time chat application backend built with Node.js, Express, Socket.io, and
 - **Real-time messaging** with Socket.io
 - **Message delivery & read receipts** with status tracking
 - **Message persistence** in PostgreSQL database
-- **Media support** - text, images, videos, files, voice, locations
+- **Media support** - text, images, videos, files, **voice messages**, locations
 - **Message types** - replies, forwards, emoji reactions, system messages
 - **Disappearing messages** with expiration timestamps
 - **View-once messages** for sensitive content
@@ -20,6 +20,15 @@ A real-time chat application backend built with Node.js, Express, Socket.io, and
 - **Real-time presence** - Online/offline status tracking
 - **Instant delivery** - Messages appear immediately when sent
 - **Typing analytics** - Optional session logging for insights
+
+### 🎙️ **Voice Messages**
+
+- **Audio recording** - Record and send voice messages up to 10MB
+- **Cross-origin support** - Proper CORS configuration for audio playback
+- **File format support** - WebM, MP3, WAV, and other audio formats
+- **Duration tracking** - Automatic duration calculation and storage
+- **Real-time broadcasting** - Voice messages appear instantly via Socket.io
+- **Static file serving** - Optimized audio file delivery with proper headers
 
 ### 👥 **User Management**
 
@@ -120,6 +129,12 @@ A real-time chat application backend built with Node.js, Express, Socket.io, and
 - `POST /api/u/:userId/mark-messages-seen/:roomId` - Mark messages as read
 - `DELETE /api/u/:userId/message/:messageId` - Delete message
 
+### **Voice Messages**
+
+- `POST /api/voice-message` - Upload voice message (alternative endpoint)
+- `POST /api/u/:userId/upload-voice/:roomId` - Upload voice message to specific room
+- `GET /uploads/voice/:filename` - Access voice message files (static serving)
+
 ### **Recent Chats**
 
 - `GET /api/recent-chats/:userId` - Get user's recent chats
@@ -145,6 +160,7 @@ A real-time chat application backend built with Node.js, Express, Socket.io, and
 - `message-sent` - Message delivery confirmation
 - `message-delivered` - Delivery receipt
 - `message-seen` - Read receipt
+- `voice-message` - Broadcast voice message to room participants
 
 ### **Live Typing**
 
@@ -205,6 +221,20 @@ enabled: true            // Can be disabled via env
 "http://localhost:5174";
 ```
 
+### **Voice Messages**
+
+```javascript
+// File upload limits
+fileSize: 10 * 1024 * 1024,    // 10MB max file size
+files: 1,                      // One file per upload
+formats: ['audio/webm', 'audio/mp3', 'audio/wav']  // Supported formats
+
+// Storage configuration
+uploadDir: './uploads/voice',   // Local storage directory
+staticServing: '/uploads',     // Public URL path
+cors: 'cross-origin'          // CORS policy for audio files
+```
+
 ## 🧪 Testing
 
 ### **Manual API Testing**
@@ -257,6 +287,10 @@ npm run dev
 
 ### 🔄 **Recent Updates**
 
+- **Voice message support** - Full audio recording, upload, and playback
+- **Cross-origin audio access** - Fixed CORS issues for voice file serving
+- **File upload middleware** - Multer integration with size limits and validation
+- **Static file optimization** - Proper headers and rate limiting bypass
 - Added live typing with keystroke-level updates
 - Implemented recent chats API
 - Enhanced rate limiting configuration

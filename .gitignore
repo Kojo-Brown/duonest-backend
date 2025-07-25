@@ -79,3 +79,4 @@ temp/
 
 # Schema backup files
 schema_fixed.sqluploads/
+uploads
