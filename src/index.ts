@@ -62,12 +62,8 @@ const io = new Server(server, {
     origin: ["https://duonest-frontend.vercel.app", "http://localhost:3000", "http://localhost:5173"],
     methods: ["GET", "POST"],
     credentials: true,
-    allowedHeaders: ["*"],
   },
-  allowEIO3: true,
   transports: ['polling', 'websocket'],
-  pingTimeout: 60000,
-  pingInterval: 25000,
 });
 
 // Security middleware with relaxed CORP for uploads
