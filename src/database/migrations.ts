@@ -22,7 +22,12 @@ export class DatabaseMigrations {
       // List of migration files in order
       const migrations = [
         '001_create_recent_chats.sql',
-        '002_create_live_typing_logs.sql'
+        '002_create_live_typing_logs.sql',
+        '003_create_users.sql',
+        '004_create_couple_rooms.sql',
+        '005_add_users_foreign_key.sql',
+        '006_create_messages.sql',
+        '007_create_functions.sql'
       ];
 
       for (const migrationFile of migrations) {
