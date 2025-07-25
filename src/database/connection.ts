@@ -1,7 +1,19 @@
 import { Pool, PoolConfig } from "pg";
 import * as dotenv from "dotenv";
 
-dotenv.config();
+// Only load .env in development, not in production
+if (process.env.NODE_ENV !== "production") {
+  dotenv.config();
+}
+
+// Add debug logging to see what variables are available
+console.log("🔍 Database Environment Variables:");
+console.log("DB_HOST:", process.env.DB_HOST || "UNDEFINED");
+console.log("DB_PORT:", process.env.DB_PORT || "UNDEFINED");
+console.log("DB_NAME:", process.env.DB_NAME || "UNDEFINED");
+console.log("DB_USER:", process.env.DB_USER || "UNDEFINED");
+console.log("DB_PASSWORD:", process.env.DB_PASSWORD ? "[SET]" : "UNDEFINED");
+console.log("NODE_ENV:", process.env.NODE_ENV || "UNDEFINED");
 
 const poolConfig: PoolConfig = {
   host: process.env.DB_HOST,

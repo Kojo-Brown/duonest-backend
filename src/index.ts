@@ -29,22 +29,29 @@ const PORT = process.env.PORT || 3000;
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // Static file serving for uploads with CORS headers - MUST BE FIRST
-app.use('/uploads', (req, res, next) => {
-  // Add comprehensive CORS headers for static file access
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control, Range');
-  res.header('Access-Control-Allow-Credentials', 'false'); // Set to false for wildcard origin
-  res.header('Cross-Origin-Resource-Policy', 'cross-origin');
-  
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    res.sendStatus(200);
-    return;
-  }
-  
-  next();
-}, express.static(join(process.cwd(), 'uploads')));
+app.use(
+  "/uploads",
+  (req, res, next) => {
+    // Add comprehensive CORS headers for static file access
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
+    res.header(
+      "Access-Control-Allow-Headers",
+      "Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control, Range"
+    );
+    res.header("Access-Control-Allow-Credentials", "false"); // Set to false for wildcard origin
+    res.header("Cross-Origin-Resource-Policy", "cross-origin");
+
+    // Handle preflight requests
+    if (req.method === "OPTIONS") {
+      res.sendStatus(200);
+      return;
+    }
+
+    next();
+  },
+  express.static(join(process.cwd(), "uploads"))
+);
 
 const io = new Server(server, {
   cors: {
@@ -58,9 +65,11 @@ const io = new Server(server, {
 });
 
 // Security middleware with relaxed CORP for uploads
-app.use(helmet({
-  crossOriginResourcePolicy: false // Disable CORP to allow cross-origin audio access
-}));
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false, // Disable CORP to allow cross-origin audio access
+  })
+);
 app.use(
   cors({
     origin: true, // Allow all origins in development
@@ -359,8 +368,18 @@ io.on("connection", (socket) => {
 
   // Voice message specific event for real-time broadcasting
   socket.on("voice-message", (data) => {
-    const { roomId, messageId, userId, fileUrl, fileName, fileSize, duration, timestamp, tempId } = data;
-    
+    const {
+      roomId,
+      messageId,
+      userId,
+      fileUrl,
+      fileName,
+      fileSize,
+      duration,
+      timestamp,
+      tempId,
+    } = data;
+
     if (!roomId || !messageId || !userId || !fileUrl) {
       console.error("Missing required data for voice-message:", data);
       return;
@@ -376,10 +395,12 @@ io.on("connection", (socket) => {
       duration,
       timestamp,
       tempId,
-      roomId
+      roomId,
     });
 
-    console.log(`Voice message broadcasted: ${messageId} from ${userId} in room ${roomId}`);
+    console.log(
+      `Voice message broadcasted: ${messageId} from ${userId} in room ${roomId}`
+    );
   });
 
   // Message delivery confirmation
@@ -520,7 +541,9 @@ io.on("connection", (socket) => {
   ): Promise<boolean> => {
     try {
       const room = await RoomService.getRoom(roomId);
-      return Boolean(room && (room.user1_id === userId || room.user2_id === userId));
+      return Boolean(
+        room && (room.user1_id === userId || room.user2_id === userId)
+      );
     } catch (error) {
       console.error("Room access validation error:", error);
       return false;
