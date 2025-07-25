@@ -64,6 +64,9 @@ router.post('/u/:userId/create-room', validateUserId, async (req: UserRequest, r
     // Create new room
     const newRoom = await RoomService.createRoom(userId);
 
+    // Small delay to ensure database consistency
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     res.json({
       message: 'Room created successfully',
       room: newRoom,

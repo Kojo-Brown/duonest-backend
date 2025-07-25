@@ -90,7 +90,7 @@ export class PresenceService {
       
       return users;
     } catch (error) {
-      console.error('Error getting users in room:', error);
+      // Room doesn't exist yet or other error, return empty array
       return [];
     }
   }
