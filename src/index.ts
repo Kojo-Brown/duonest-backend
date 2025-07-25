@@ -29,7 +29,8 @@ const app = express();
 app.set("trust proxy", 1);
 
 const server = createServer(app);
-const PORT = process.env.PORT || 3000;
+const PORT =
+  process.env.PORT || (process.env.NODE_ENV === "production" ? 8080 : 3000);
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // Static file serving for uploads with CORS headers - MUST BE FIRST
