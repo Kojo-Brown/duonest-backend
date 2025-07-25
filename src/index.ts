@@ -59,12 +59,15 @@ app.use(
 
 const io = new Server(server, {
   cors: {
-    origin: "*", // Allow all origins for debugging
+    origin: ["https://duonest-frontend.vercel.app", "http://localhost:3000", "http://localhost:5173"],
     methods: ["GET", "POST"],
-    credentials: false, // Set to false for wildcard origin
+    credentials: true,
+    allowedHeaders: ["*"],
   },
-  allowEIO3: true, // Allow Engine.IO v3 clients
-  transports: ['polling', 'websocket'], // Try polling first
+  allowEIO3: true,
+  transports: ['polling', 'websocket'],
+  pingTimeout: 60000,
+  pingInterval: 25000,
 });
 
 // Security middleware with relaxed CORP for uploads
@@ -75,10 +78,10 @@ app.use(
 );
 app.use(
   cors({
-    origin: process.env.NODE_ENV === 'production' 
-      ? ["https://duonest-frontend.vercel.app", "https://duonest-frontend-git-main-kojo-browns-projects.vercel.app", "https://duonest-frontend-git-dev-kojo-browns-projects.vercel.app"]
-      : true, // Allow all origins in development
+    origin: ["https://duonest-frontend.vercel.app", "http://localhost:3000", "http://localhost:5173"],
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["*"],
   })
 );
 
