@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { validateUserId, UserRequest } from '../middleware/userValidation.js';
 import { MessageService } from '../services/messageService.js';
 import { RoomService } from '../services/roomService.js';
+import { voiceUpload, handleUploadError } from '../middleware/fileUpload.js';
 
 const router = Router();
 
@@ -134,6 +135,114 @@ router.delete('/u/:userId/message/:messageId', validateUserId, async (req: UserR
   } catch (error) {
     console.error('Error deleting message:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/u/:userId/upload-voice/:roomId - Upload voice message
+router.post('/u/:userId/upload-voice/:roomId', validateUserId, voiceUpload.single('audio'), handleUploadError, async (req: UserRequest, res: Response) => {
+  try {
+    const { userId } = req.params;
+    const { roomId } = req.params;
+    const { duration, tempId } = req.body;
+    const audioFile = req.file;
+
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    if (!audioFile) {
+      return res.status(400).json({ error: 'No audio file provided' });
+    }
+
+    if (!roomId) {
+      return res.status(400).json({ error: 'Room ID is required' });
+    }
+
+    // Verify user is in the room
+    const userRoom = await RoomService.getUserCurrentRoom(userId);
+    if (!userRoom || userRoom.room_id !== roomId) {
+      return res.status(403).json({ error: 'User not authorized to send messages in this room' });
+    }
+
+    // Save voice message to database
+    const message = await MessageService.saveMessage({
+      room_id: roomId,
+      sender_id: userId,
+      content: 'Voice message',
+      message_type: 'voice',
+      file_url: `/uploads/voice/${audioFile.filename}`,
+      file_name: audioFile.filename,
+      file_size: audioFile.size,
+      duration: parseInt(duration) || 0
+    });
+
+    res.json({
+      success: true,
+      messageId: message.id,
+      file_url: `/uploads/voice/${audioFile.filename}`,
+      file_name: audioFile.filename,
+      file_size: audioFile.size,
+      duration: parseInt(duration) || 0,
+      tempId: tempId,
+      message: message
+    });
+
+  } catch (error) {
+    console.error('Error saving voice message:', error);
+    res.status(500).json({ error: 'Failed to save voice message' });
+  }
+});
+
+// POST /api/voice-message - Alternative voice message upload endpoint
+router.post('/voice-message', voiceUpload.single('audio'), handleUploadError, async (req: Request, res: Response) => {
+  try {
+    const { userId, roomId, duration, tempId } = req.body;
+    const audioFile = req.file;
+
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    if (!audioFile) {
+      return res.status(400).json({ error: 'No audio file provided' });
+    }
+
+    if (!roomId) {
+      return res.status(400).json({ error: 'Room ID is required' });
+    }
+
+    // Verify user is in the room
+    const userRoom = await RoomService.getUserCurrentRoom(userId);
+    if (!userRoom || userRoom.room_id !== roomId) {
+      return res.status(403).json({ error: 'User not authorized to send messages in this room' });
+    }
+
+    // Save voice message to database
+    const message = await MessageService.saveMessage({
+      room_id: roomId,
+      sender_id: userId,
+      content: 'Voice message',
+      message_type: 'voice',
+      file_url: `/uploads/voice/${audioFile.filename}`,
+      file_name: audioFile.filename,
+      file_size: audioFile.size,
+      duration: parseInt(duration) || 0
+    });
+
+    res.json({
+      success: true,
+      messageId: message.id,
+      file_url: `/uploads/voice/${audioFile.filename}`,
+      file_name: audioFile.filename,
+      file_size: audioFile.size,
+      duration: parseInt(duration) || 0,
+      tempId: tempId,
+      message: message
+    });
+
+  } catch (error) {
+    console.error('Error saving voice message:', error);
+    res.status(500).json({ error: 'Failed to save voice message' });
   }
 });
 

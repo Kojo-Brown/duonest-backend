@@ -27,6 +27,7 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "@types/multer": "^2.0.0",
     "@types/pg": "^8.15.4",
     "bcryptjs": "^3.0.2",
     "compression": "^1.8.1",
@@ -38,6 +39,7 @@
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.1",
+    "multer": "^2.0.2",
     "pg": "^8.16.3",
     "socket.io": "^4.8.1",
     "uuid": "^11.1.0"

@@ -26,6 +26,26 @@ dotenv.config();
 const app = express();
 const server = createServer(app);
 const PORT = process.env.PORT || 3000;
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// Static file serving for uploads with CORS headers - MUST BE FIRST
+app.use('/uploads', (req, res, next) => {
+  // Add comprehensive CORS headers for static file access
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control, Range');
+  res.header('Access-Control-Allow-Credentials', 'false'); // Set to false for wildcard origin
+  res.header('Cross-Origin-Resource-Policy', 'cross-origin');
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+    return;
+  }
+  
+  next();
+}, express.static(join(process.cwd(), 'uploads')));
+
 const io = new Server(server, {
   cors: {
     origin: [
@@ -37,15 +57,13 @@ const io = new Server(server, {
   },
 });
 
-// Security middleware
-app.use(helmet());
+// Security middleware with relaxed CORP for uploads
+app.use(helmet({
+  crossOriginResourcePolicy: false // Disable CORP to allow cross-origin audio access
+}));
 app.use(
   cors({
-    origin: [
-      "http://localhost:3000",
-      "http://localhost:5173",
-      "http://localhost:5174",
-    ],
+    origin: true, // Allow all origins in development
     credentials: true,
   })
 );
@@ -62,7 +80,8 @@ const limiter = rateLimit({
       req.method === "GET" &&
       (req.path.includes("/api/c/") ||
         req.path.includes("/api/recent-chats/") ||
-        req.path.includes("/health"))
+        req.path.includes("/health") ||
+        req.path.includes("/uploads/"))
     );
   },
 
@@ -78,7 +97,7 @@ app.use(morgan("combined"));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+// Duplicate uploads middleware removed - now handled at the top
 
 // API Routes
 app.use("/api", userRoutes);
@@ -106,6 +125,7 @@ app.get("/", (req, res) => {
       unreadMessages: "/api/u/:userId/unread-messages/:roomId",
       markSeen: "/api/u/:userId/mark-messages-seen/:roomId",
       deleteMessage: "/api/u/:userId/message/:messageId",
+      uploadVoice: "/api/u/:userId/upload-voice/:roomId",
       recentChats: "/api/recent-chats/:userId",
       addRecentChat: "/api/recent-chats",
       updateRecentChat: "/api/recent-chats/:userId/:roomId",
@@ -236,6 +256,8 @@ io.on("connection", (socket) => {
         messageType = "text",
         fileUrl,
         fileName,
+        fileSize,
+        duration,
       } = data;
 
       // Validate required data
@@ -268,6 +290,8 @@ io.on("connection", (socket) => {
         message_type: messageType,
         file_url: fileUrl,
         file_name: fileName,
+        file_size: fileSize,
+        duration: duration,
       });
 
       // Broadcast to all users in the room except sender
@@ -279,6 +303,8 @@ io.on("connection", (socket) => {
         timestamp: savedMessage.created_at,
         fileUrl: savedMessage.file_url,
         fileName: savedMessage.file_name,
+        fileSize: savedMessage.file_size,
+        duration: savedMessage.duration,
         delivered_at: null,
         seen_at: null,
         seen_by_user_id: null,
@@ -317,6 +343,8 @@ io.on("connection", (socket) => {
         messageType: savedMessage.message_type,
         fileUrl: savedMessage.file_url,
         fileName: savedMessage.file_name,
+        fileSize: savedMessage.file_size,
+        duration: savedMessage.duration,
         delivered_at: null,
         seen_at: null,
         seen_by_user_id: null,
@@ -327,6 +355,31 @@ io.on("connection", (socket) => {
       console.error("Error handling chat message:", error);
       socket.emit("message-error", { error: "Failed to send message" });
     }
+  });
+
+  // Voice message specific event for real-time broadcasting
+  socket.on("voice-message", (data) => {
+    const { roomId, messageId, userId, fileUrl, fileName, fileSize, duration, timestamp, tempId } = data;
+    
+    if (!roomId || !messageId || !userId || !fileUrl) {
+      console.error("Missing required data for voice-message:", data);
+      return;
+    }
+
+    // Broadcast voice message to all users in the room except sender
+    socket.to(roomId).emit("voice-message", {
+      messageId,
+      userId,
+      fileUrl,
+      fileName,
+      fileSize,
+      duration,
+      timestamp,
+      tempId,
+      roomId
+    });
+
+    console.log(`Voice message broadcasted: ${messageId} from ${userId} in room ${roomId}`);
   });
 
   // Message delivery confirmation
