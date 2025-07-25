@@ -10,9 +10,6 @@ export class PresenceService {
     activeUsers.set(userId, socketId);
     userSockets.set(socketId, userId);
     
-    console.log(`PresenceService: User ${userId} set online with socket ${socketId}`);
-    console.log(`PresenceService: Active users count: ${activeUsers.size}`);
-    
     // Update database
     this.updateUserPresence(userId, true);
   }
@@ -36,10 +33,7 @@ export class PresenceService {
   }
 
   static getSocketByUserId(userId: string): string | null {
-    const socketId = activeUsers.get(userId) || null;
-    console.log(`PresenceService: Looking for user ${userId}, found socket: ${socketId}`);
-    console.log(`PresenceService: Current active users:`, Array.from(activeUsers.keys()));
-    return socketId;
+    return activeUsers.get(userId) || null;
   }
 
   static isUserOnline(userId: string): boolean {
@@ -69,6 +63,10 @@ export class PresenceService {
   }
 
   static async getRoomParticipants(roomId: string): Promise<{ user1_id: string; user2_id?: string }> {
+    if (!roomId) {
+      throw new Error('Room ID is required');
+    }
+    
     const result = await query(
       'SELECT user1_id, user2_id FROM couple_rooms WHERE room_id = $1',
       [roomId]
