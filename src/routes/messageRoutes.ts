@@ -170,7 +170,7 @@ router.post('/u/:userId/upload-voice/:roomId', validateUserId, voiceUpload.singl
       sender_id: userId,
       content: 'Voice message',
       message_type: 'voice',
-      file_url: `/uploads/voice/${audioFile.filename}`,
+      file_url: `${process.env.NODE_ENV === 'production' ? 'https://duonest-backend-production.up.railway.app' : `${req.protocol}://${req.get('host')}`}/uploads/voice/${audioFile.filename}`,
       file_name: audioFile.filename,
       file_size: audioFile.size,
       duration: parseInt(duration) || 0
@@ -179,7 +179,7 @@ router.post('/u/:userId/upload-voice/:roomId', validateUserId, voiceUpload.singl
     res.json({
       success: true,
       messageId: message.id,
-      file_url: `/uploads/voice/${audioFile.filename}`,
+      file_url: `${process.env.NODE_ENV === 'production' ? 'https://duonest-backend-production.up.railway.app' : `${req.protocol}://${req.get('host')}`}/uploads/voice/${audioFile.filename}`,
       file_name: audioFile.filename,
       file_size: audioFile.size,
       duration: parseInt(duration) || 0,
@@ -223,7 +223,7 @@ router.post('/voice-message', voiceUpload.single('audio'), handleUploadError, as
       sender_id: userId,
       content: 'Voice message',
       message_type: 'voice',
-      file_url: `/uploads/voice/${audioFile.filename}`,
+      file_url: `${process.env.NODE_ENV === 'production' ? 'https://duonest-backend-production.up.railway.app' : `${req.protocol}://${req.get('host')}`}/uploads/voice/${audioFile.filename}`,
       file_name: audioFile.filename,
       file_size: audioFile.size,
       duration: parseInt(duration) || 0
@@ -232,7 +232,7 @@ router.post('/voice-message', voiceUpload.single('audio'), handleUploadError, as
     res.json({
       success: true,
       messageId: message.id,
-      file_url: `/uploads/voice/${audioFile.filename}`,
+      file_url: `${process.env.NODE_ENV === 'production' ? 'https://duonest-backend-production.up.railway.app' : `${req.protocol}://${req.get('host')}`}/uploads/voice/${audioFile.filename}`,
       file_name: audioFile.filename,
       file_size: audioFile.size,
       duration: parseInt(duration) || 0,
