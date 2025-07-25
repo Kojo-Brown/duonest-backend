@@ -209,8 +209,10 @@ io.on("connection", (socket) => {
     const userId =
       typeof roomIdOrData === "object" ? roomIdOrData?.userId : socket.userId;
 
+    console.log(`🚪 Join attempt - Socket: ${socket.id}, RoomId: ${roomId}, UserId: ${userId}`);
+
     if (!roomId) {
-      console.error("No roomId provided for join-room");
+      console.log(`❌ No roomId provided for join-room`);
       return;
     }
 
@@ -218,11 +220,12 @@ io.on("connection", (socket) => {
     if (userId && !socket.userId) {
       PresenceService.setUserOnline(userId, socket.id);
       socket.userId = userId;
-      console.log(`Auto-registered user: ${userId} (${socket.id})`);
+      console.log(`👤 Auto-registered user: ${userId} (${socket.id})`);
     }
 
     socket.join(roomId);
     socket.roomId = roomId; // Store roomId on socket for cleanup
+    console.log(`✅ Socket ${socket.id} joined room ${roomId}`);
 
     // Notify others in the room
     socket.to(roomId).emit("user-joined", { userId, socketId: socket.id });
@@ -269,6 +272,8 @@ io.on("connection", (socket) => {
 
   // Enhanced chat message with database storage
   socket.on("chat-message", async (data) => {
+    console.log(`📨 Message attempt - Socket: ${socket.id}, RoomId: ${data?.roomId}, UserId: ${data?.userId}`);
+    
     try {
       const {
         roomId,
@@ -283,6 +288,7 @@ io.on("connection", (socket) => {
 
       // Validate required data
       if (!roomId || !message || !userId) {
+        console.log(`❌ Missing data - roomId: ${!!roomId}, message: ${!!message}, userId: ${!!userId}`);
         socket.emit("message-error", {
           error: "Missing required message data",
         });
@@ -310,6 +316,8 @@ io.on("connection", (socket) => {
         duration: duration,
       });
 
+      console.log(`💾 Message saved - ID: ${savedMessage.id}, Room: ${roomId}`);
+
       // Broadcast to all users in the room except sender
       socket.to(roomId).emit("chat-message", {
         id: savedMessage.id,
@@ -327,6 +335,29 @@ io.on("connection", (socket) => {
         status: "sent", // Add status field for tracking
         socketId: socket.id,
       });
+
+      console.log(`📡 Message broadcasted to room ${roomId} (excluding sender ${socket.id})`);
+
+      // Confirm message sent to sender
+      socket.emit("message-sent", {
+        id: savedMessage.id,
+        tempId: data.tempId, // Client-side temporary ID for matching
+        timestamp: savedMessage.created_at,
+        message: savedMessage.content,
+        userId: savedMessage.sender_id,
+        messageType: savedMessage.message_type,
+        fileUrl: savedMessage.file_url,
+        fileName: savedMessage.file_name,
+        fileSize: savedMessage.file_size,
+        duration: savedMessage.duration,
+        delivered_at: null,
+        seen_at: null,
+        seen_by_user_id: null,
+        status: "sent",
+        roomId: roomId,
+      });
+
+      console.log(`✅ Message confirmation sent to sender ${socket.id}`);
 
       // Auto-mark message as delivered since it was successfully broadcasted
       setTimeout(async () => {
@@ -348,25 +379,6 @@ io.on("connection", (socket) => {
           console.error("Error auto-marking message as delivered:", error);
         }
       }, 100); // Small delay to ensure message is received
-
-      // Confirm message sent to sender
-      socket.emit("message-sent", {
-        id: savedMessage.id,
-        tempId: data.tempId, // Client-side temporary ID for matching
-        timestamp: savedMessage.created_at,
-        message: savedMessage.content,
-        userId: savedMessage.sender_id,
-        messageType: savedMessage.message_type,
-        fileUrl: savedMessage.file_url,
-        fileName: savedMessage.file_name,
-        fileSize: savedMessage.file_size,
-        duration: savedMessage.duration,
-        delivered_at: null,
-        seen_at: null,
-        seen_by_user_id: null,
-        status: "sent",
-        roomId: roomId,
-      });
     } catch (error) {
       console.error("Error handling chat message:", error);
       socket.emit("message-error", { error: "Failed to send message" });
