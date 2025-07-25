@@ -55,14 +55,19 @@ app.use(
 
 const io = new Server(server, {
   cors: {
-    origin: [
-      "http://localhost:3000",
-      "http://localhost:5173",
-      "http://localhost:5174",
-      "https://duonest-frontend.vercel.app",
-    ],
+    origin: process.env.NODE_ENV === 'production' 
+      ? ["https://duonest-frontend.vercel.app", "https://duonest-frontend-git-main-kojo-browns-projects.vercel.app", "https://duonest-frontend-git-dev-kojo-browns-projects.vercel.app"]
+      : [
+          "http://localhost:3000",
+          "http://localhost:5173", 
+          "http://localhost:5174",
+          "https://duonest-frontend.vercel.app",
+        ],
     methods: ["GET", "POST"],
+    credentials: true,
   },
+  allowEIO3: true, // Allow Engine.IO v3 clients
+  transports: ['websocket', 'polling'], // Enable both transports
 });
 
 // Security middleware with relaxed CORP for uploads
@@ -73,7 +78,9 @@ app.use(
 );
 app.use(
   cors({
-    origin: true, // Allow all origins in development
+    origin: process.env.NODE_ENV === 'production' 
+      ? ["https://duonest-frontend.vercel.app", "https://duonest-frontend-git-main-kojo-browns-projects.vercel.app", "https://duonest-frontend-git-dev-kojo-browns-projects.vercel.app"]
+      : true, // Allow all origins in development
     credentials: true,
   })
 );
@@ -146,7 +153,9 @@ app.get("/", (req, res) => {
 
 // Socket.IO connection handling
 io.on("connection", (socket) => {
-  console.log(`User connected: ${socket.id}`);
+  console.log(`🔌 WebSocket connected: ${socket.id} from ${socket.handshake.address}`);
+  console.log(`🌐 Origin: ${socket.handshake.headers.origin}`);
+  console.log(`🚀 Transport: ${socket.conn.transport.name}`);
 
   // User identification and presence
   socket.on("identify-user", (userId) => {
@@ -258,6 +267,8 @@ io.on("connection", (socket) => {
 
   // Enhanced chat message with database storage
   socket.on("chat-message", async (data) => {
+    console.log(`💬 Chat message received from ${socket.id}:`, { roomId: data.roomId, userId: data.userId, messageType: data.messageType });
+    
     try {
       const {
         roomId,
@@ -272,7 +283,7 @@ io.on("connection", (socket) => {
 
       // Validate required data
       if (!roomId || !message || !userId) {
-        console.error("Missing required data for chat-message:", {
+        console.error("❌ Missing required data for chat-message:", {
           roomId,
           message,
           userId,
