@@ -40,11 +40,15 @@ router.post('/c/:roomId/join', validateRoomId, async (req: Request, res: Respons
     const { roomId } = req.params;
     const { userId } = req.body;
 
+    console.log(`🚪 JOIN REQUEST - RoomId: ${roomId}, UserId: ${userId}`);
+
     if (!userId) {
+      console.log(`❌ JOIN FAILED - No userId provided`);
       return res.status(400).json({ error: 'User ID is required' });
     }
 
     if (!validateUserIdFormat(userId)) {
+      console.log(`❌ JOIN FAILED - Invalid userId format: ${userId}`);
       return res.status(400).json({ error: 'Invalid user ID format' });
     }
 
@@ -55,10 +59,14 @@ router.post('/c/:roomId/join', validateRoomId, async (req: Request, res: Respons
     const updatedRoom = await RoomService.joinRoom(roomId, userId);
 
     if (!updatedRoom) {
+      console.log(`❌ JOIN FAILED - Room ${roomId} is full or inactive for user ${userId}`);
       return res.status(400).json({ 
         error: 'Cannot join room - room may be full or inactive' 
       });
     }
+
+    console.log(`✅ JOIN SUCCESS - User ${userId} joined room ${roomId}`);
+    console.log(`🏠 Final room state - user1_id: ${updatedRoom.user1_id}, user2_id: ${updatedRoom.user2_id}`);
 
     res.json({
       message: 'Joined room successfully',
@@ -141,7 +149,32 @@ router.get('/c/:roomId/messages', validateRoomId, async (req: Request, res: Resp
     if (room.user1_id !== userId && room.user2_id !== userId) {
       console.log(`❌ Access denied - User ${userId} not found in room ${roomId}`);
       console.log(`🔍 Comparison - user1_id === userId: ${room.user1_id === userId}, user2_id === userId: ${room.user2_id === userId}`);
-      return res.status(403).json({ error: 'Access denied. You are not a member of this room.' });
+      
+      // Auto-join fallback: if room has space and user is trying to access messages, try to join them
+      if (!room.user2_id && room.is_active) {
+        console.log(`🔄 Attempting auto-join for user ${userId} to room ${roomId}`);
+        try {
+          // Create user if doesn't exist
+          await RoomService.createUser(userId).catch(() => null);
+          
+          // Try to join the room
+          const updatedRoom = await RoomService.joinRoom(roomId, userId);
+          
+          if (updatedRoom) {
+            console.log(`✅ Auto-join successful - User ${userId} joined room ${roomId}`);
+            // Continue to get messages with the updated room state
+            room.user2_id = userId;
+          } else {
+            console.log(`❌ Auto-join failed for user ${userId} to room ${roomId}`);
+            return res.status(403).json({ error: 'Access denied. You are not a member of this room.' });
+          }
+        } catch (autoJoinError) {
+          console.log(`❌ Auto-join error:`, autoJoinError);
+          return res.status(403).json({ error: 'Access denied. You are not a member of this room.' });
+        }
+      } else {
+        return res.status(403).json({ error: 'Access denied. You are not a member of this room.' });
+      }
     }
 
     console.log(`✅ Access granted - User ${userId} is a member of room ${roomId}`);
