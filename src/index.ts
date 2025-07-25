@@ -26,7 +26,7 @@ dotenv.config();
 const app = express();
 
 // Trust proxy for Railway deployment
-app.set('trust proxy', 1);
+app.set("trust proxy", 1);
 
 const server = createServer(app);
 const PORT = process.env.PORT || 3000;
@@ -59,11 +59,16 @@ app.use(
 
 const io = new Server(server, {
   cors: {
-    origin: ["https://duonest-frontend.vercel.app", "http://localhost:3000", "http://localhost:5173"],
+    origin: [
+      "https://duonest-frontend.vercel.app",
+      "http://localhost:3000",
+      "http://localhost:5173",
+    ],
     methods: ["GET", "POST"],
     credentials: true,
   },
-  transports: ['polling', 'websocket'],
+  transports: ["websocket", "polling"],
+  allowEIO3: true,
 });
 
 // Security middleware with relaxed CORP for uploads
@@ -74,10 +79,20 @@ app.use(
 );
 app.use(
   cors({
-    origin: ["https://duonest-frontend.vercel.app", "http://localhost:3000", "http://localhost:5173"],
+    origin: [
+      "https://duonest-frontend.vercel.app",
+      "http://localhost:3000",
+      "http://localhost:5173",
+    ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+      "Accept",
+      "Origin",
+    ],
   })
 );
 
@@ -155,14 +170,17 @@ io.engine.on("connection_error", (err) => {
   console.log("❌ ERROR CONTEXT:", err.context);
 });
 
-// Socket.IO connection handling  
+// Socket.IO connection handling
 io.on("connection", (socket) => {
   console.log(`🔌 WEBSOCKET CONNECTED: ${socket.id}`);
   console.log(`🌐 Origin: ${socket.handshake.headers.origin}`);
   console.log(`🚀 Transport: ${socket.conn.transport.name}`);
-  
+
   // Test immediate response
-  socket.emit("connection-confirmed", { socketId: socket.id, timestamp: Date.now() });
+  socket.emit("connection-confirmed", {
+    socketId: socket.id,
+    timestamp: Date.now(),
+  });
 
   // User identification and presence
   socket.on("identify-user", (userId) => {
@@ -214,7 +232,9 @@ io.on("connection", (socket) => {
     const userId =
       typeof roomIdOrData === "object" ? roomIdOrData?.userId : socket.userId;
 
-    console.log(`🚪 Join attempt - Socket: ${socket.id}, RoomId: ${roomId}, UserId: ${userId}`);
+    console.log(
+      `🚪 Join attempt - Socket: ${socket.id}, RoomId: ${roomId}, UserId: ${userId}`
+    );
 
     if (!roomId) {
       console.log(`❌ No roomId provided for join-room`);
@@ -277,8 +297,10 @@ io.on("connection", (socket) => {
 
   // Enhanced chat message with database storage
   socket.on("chat-message", async (data) => {
-    console.log(`📨 Message attempt - Socket: ${socket.id}, RoomId: ${data?.roomId}, UserId: ${data?.userId}`);
-    
+    console.log(
+      `📨 Message attempt - Socket: ${socket.id}, RoomId: ${data?.roomId}, UserId: ${data?.userId}`
+    );
+
     try {
       const {
         roomId,
@@ -293,7 +315,9 @@ io.on("connection", (socket) => {
 
       // Validate required data
       if (!roomId || !message || !userId) {
-        console.log(`❌ Missing data - roomId: ${!!roomId}, message: ${!!message}, userId: ${!!userId}`);
+        console.log(
+          `❌ Missing data - roomId: ${!!roomId}, message: ${!!message}, userId: ${!!userId}`
+        );
         socket.emit("message-error", {
           error: "Missing required message data",
         });
@@ -341,7 +365,9 @@ io.on("connection", (socket) => {
         socketId: socket.id,
       });
 
-      console.log(`📡 Message broadcasted to room ${roomId} (excluding sender ${socket.id})`);
+      console.log(
+        `📡 Message broadcasted to room ${roomId} (excluding sender ${socket.id})`
+      );
 
       // Confirm message sent to sender
       socket.emit("message-sent", {
