@@ -60,8 +60,8 @@ export class RoomService {
 
     // Check if user is already in the room
     if (room.user1_id === userId || room.user2_id === userId) {
-      console.log(`User ${userId} is already in room 
-    ${roomId}`);
+      console.log(`✅ User ${userId} is already in room ${roomId}`);
+      console.log(`🏠 Room state - user1_id: ${room.user1_id}, user2_id: ${room.user2_id}`);
       // Update user status and return current room
       await query(
         "UPDATE users SET status = $1, current_room_id = $2 WHERE id = $3",
@@ -76,6 +76,7 @@ export class RoomService {
     }
 
     // Join the room as user2
+    console.log(`🚪 User ${userId} joining room ${roomId} as user2`);
     const result = await query(
       "UPDATE couple_rooms SET user2_id = $1, last_activity = NOW() WHERE room_id = $2 RETURNING *",
       [userId, roomId]
@@ -87,6 +88,9 @@ export class RoomService {
       ["in_room", roomId, userId]
     );
 
+    console.log(`✅ User ${userId} successfully joined room ${roomId}`);
+    console.log(`🏠 Updated room state - user1_id: ${result.rows[0].user1_id}, user2_id: ${result.rows[0].user2_id}`);
+    
     return result.rows[0];
   }
 

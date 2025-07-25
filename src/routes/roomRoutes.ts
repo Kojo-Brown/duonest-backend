@@ -133,10 +133,18 @@ router.get('/c/:roomId/messages', validateRoomId, async (req: Request, res: Resp
       return res.status(404).json({ error: 'Room not found' });
     }
 
+    // Debug logging for room membership
+    console.log(`🔍 Room access check - RoomId: ${roomId}, UserId: ${userId}`);
+    console.log(`🏠 Room state - user1_id: ${room.user1_id}, user2_id: ${room.user2_id}, is_active: ${room.is_active}`);
+    
     // Verify user is either user1 or user2 in the room
     if (room.user1_id !== userId && room.user2_id !== userId) {
+      console.log(`❌ Access denied - User ${userId} not found in room ${roomId}`);
+      console.log(`🔍 Comparison - user1_id === userId: ${room.user1_id === userId}, user2_id === userId: ${room.user2_id === userId}`);
       return res.status(403).json({ error: 'Access denied. You are not a member of this room.' });
     }
+
+    console.log(`✅ Access granted - User ${userId} is a member of room ${roomId}`);
 
     // Get messages from database (ordered by creation time ascending)
     const messages = await MessageService.getRoomMessages(roomId, limit, offset);
