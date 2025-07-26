@@ -31,6 +31,7 @@ export class DatabaseMigrations {
         "008_add_image_fields.sql",
         "009_add_video_fields.sql",
         "010_fix_duration_type.sql",
+        "011_add_delivery_receipt_fields.sql",
       ];
 
       for (const migrationFile of migrations) {
