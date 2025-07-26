@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { validateUserId, UserRequest } from '../middleware/userValidation.js';
 import { MessageService } from '../services/messageService.js';
 import { RoomService } from '../services/roomService.js';
-import { voiceUpload, handleUploadError, imageUpload, handleImageUploadError, processImage } from '../middleware/fileUpload.js';
+import { voiceUpload, handleUploadError, imageUpload, handleImageUploadError, processImage, videoUpload, handleVideoUploadError, processVideo } from '../middleware/fileUpload.js';
 import path from 'path';
 import fs from 'fs';
 
@@ -393,6 +393,150 @@ router.post('/image-message', imageUpload.single('image'), handleImageUploadErro
   } catch (error) {
     console.error('Error saving image message:', error);
     res.status(500).json({ error: 'Failed to save image message' });
+  }
+});
+
+// POST /api/u/:userId/upload-video/:roomId - Upload video message
+router.post('/u/:userId/upload-video/:roomId', validateUserId, videoUpload.single('video'), handleVideoUploadError, async (req: UserRequest, res: Response) => {
+  try {
+    const { userId } = req.params;
+    const { roomId } = req.params;
+    const { caption, tempId } = req.body;
+    const videoFile = req.file;
+
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    if (!videoFile) {
+      return res.status(400).json({ error: 'No video file provided' });
+    }
+
+    if (!roomId) {
+      return res.status(400).json({ error: 'Room ID is required' });
+    }
+
+    // Verify user is in the room
+    const userRoom = await RoomService.getUserCurrentRoom(userId);
+    if (!userRoom || userRoom.room_id !== roomId) {
+      return res.status(403).json({ error: 'User not authorized to send messages in this room' });
+    }
+
+    // Process video (get metadata and create thumbnail)
+    const uploadDir = path.join(process.cwd(), 'uploads', 'videos');
+    const processedVideo = await processVideo(videoFile.path, uploadDir, videoFile.filename);
+
+    const baseUrl = process.env.NODE_ENV === 'production' 
+      ? 'https://duonest-backend-production.up.railway.app' 
+      : `${req.protocol}://${req.get('host')}`;
+
+    // Save video message to database
+    const message = await MessageService.saveMessage({
+      room_id: roomId,
+      sender_id: userId,
+      content: caption || 'Video',
+      message_type: 'video',
+      file_url: `${baseUrl}/uploads/videos/${videoFile.filename}`,
+      file_name: videoFile.filename,
+      file_size: videoFile.size,
+      thumbnail_url: `${baseUrl}/uploads/videos/thumbnails/${processedVideo.thumbnailFilename}`,
+      duration: Number(processedVideo.duration),
+      video_duration: Number(processedVideo.duration),
+      video_width: Number(processedVideo.width),
+      video_height: Number(processedVideo.height),
+      video_bitrate: Number(processedVideo.bitrate)
+    });
+
+    res.json({
+      success: true,
+      messageId: message.id,
+      file_url: `${baseUrl}/uploads/videos/${videoFile.filename}`,
+      thumbnail_url: `${baseUrl}/uploads/videos/thumbnails/${processedVideo.thumbnailFilename}`,
+      file_name: videoFile.filename,
+      file_size: videoFile.size,
+      duration: processedVideo.duration,
+      video_width: processedVideo.width,
+      video_height: processedVideo.height,
+      video_bitrate: processedVideo.bitrate,
+      caption: caption || '',
+      tempId: tempId,
+      message: message
+    });
+
+  } catch (error) {
+    console.error('Error saving video message:', error);
+    res.status(500).json({ error: 'Failed to save video message' });
+  }
+});
+
+// POST /api/video-message - Alternative video message upload endpoint
+router.post('/video-message', videoUpload.single('video'), handleVideoUploadError, async (req: Request, res: Response) => {
+  try {
+    const { userId, roomId, caption, tempId } = req.body;
+    const videoFile = req.file;
+
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    if (!videoFile) {
+      return res.status(400).json({ error: 'No video file provided' });
+    }
+
+    if (!roomId) {
+      return res.status(400).json({ error: 'Room ID is required' });
+    }
+
+    // Verify user is in the room
+    const userRoom = await RoomService.getUserCurrentRoom(userId);
+    if (!userRoom || userRoom.room_id !== roomId) {
+      return res.status(403).json({ error: 'User not authorized to send messages in this room' });
+    }
+
+    // Process video (get metadata and create thumbnail)
+    const uploadDir = path.join(process.cwd(), 'uploads', 'videos');
+    const processedVideo = await processVideo(videoFile.path, uploadDir, videoFile.filename);
+
+    const baseUrl = process.env.NODE_ENV === 'production' 
+      ? 'https://duonest-backend-production.up.railway.app' 
+      : `${req.protocol}://${req.get('host')}`;
+
+    // Save video message to database
+    const message = await MessageService.saveMessage({
+      room_id: roomId,
+      sender_id: userId,
+      content: caption || 'Video',
+      message_type: 'video',
+      file_url: `${baseUrl}/uploads/videos/${videoFile.filename}`,
+      file_name: videoFile.filename,
+      file_size: videoFile.size,
+      thumbnail_url: `${baseUrl}/uploads/videos/thumbnails/${processedVideo.thumbnailFilename}`,
+      duration: Number(processedVideo.duration),
+      video_duration: Number(processedVideo.duration),
+      video_width: Number(processedVideo.width),
+      video_height: Number(processedVideo.height),
+      video_bitrate: Number(processedVideo.bitrate)
+    });
+
+    res.json({
+      success: true,
+      messageId: message.id,
+      file_url: `${baseUrl}/uploads/videos/${videoFile.filename}`,
+      thumbnail_url: `${baseUrl}/uploads/videos/thumbnails/${processedVideo.thumbnailFilename}`,
+      file_name: videoFile.filename,
+      file_size: videoFile.size,
+      duration: processedVideo.duration,
+      video_width: processedVideo.width,
+      video_height: processedVideo.height,
+      video_bitrate: processedVideo.bitrate,
+      caption: caption || '',
+      tempId: tempId,
+      message: message
+    });
+
+  } catch (error) {
+    console.error('Error saving video message:', error);
+    res.status(500).json({ error: 'Failed to save video message' });
   }
 });
 

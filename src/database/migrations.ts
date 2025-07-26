@@ -29,6 +29,8 @@ export class DatabaseMigrations {
         "006_create_messages.sql",
         "007_create_functions.sql",
         "008_add_image_fields.sql",
+        "009_add_video_fields.sql",
+        "010_fix_duration_type.sql",
       ];
 
       for (const migrationFile of migrations) {

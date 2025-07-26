@@ -156,6 +156,7 @@ app.get("/", (req, res) => {
       deleteMessage: "/api/u/:userId/message/:messageId",
       uploadVoice: "/api/u/:userId/upload-voice/:roomId",
       uploadImage: "/api/u/:userId/upload-image/:roomId",
+      uploadVideo: "/api/u/:userId/upload-video/:roomId",
       recentChats: "/api/recent-chats/:userId",
       addRecentChat: "/api/recent-chats",
       updateRecentChat: "/api/recent-chats/:userId/:roomId",
@@ -317,6 +318,10 @@ io.on("connection", (socket) => {
         imageWidth,
         imageHeight,
         thumbnailUrl,
+        videoDuration,
+        videoWidth,
+        videoHeight,
+        videoBitrate,
       } = data;
 
       // Validate required data
@@ -352,6 +357,10 @@ io.on("connection", (socket) => {
         thumbnail_url: thumbnailUrl,
         image_width: imageWidth,
         image_height: imageHeight,
+        video_duration: videoDuration,
+        video_width: videoWidth,
+        video_height: videoHeight,
+        video_bitrate: videoBitrate,
       });
 
       console.log(`💾 Message saved - ID: ${savedMessage.id}, Room: ${roomId}`);
@@ -370,7 +379,11 @@ io.on("connection", (socket) => {
         thumbnailUrl: savedMessage.thumbnail_url,
         imageWidth: savedMessage.image_width,
         imageHeight: savedMessage.image_height,
-        caption: messageType === 'image' ? savedMessage.content : undefined,
+        videoDuration: savedMessage.video_duration,
+        videoWidth: savedMessage.video_width,
+        videoHeight: savedMessage.video_height,
+        videoBitrate: savedMessage.video_bitrate,
+        caption: messageType === 'image' || messageType === 'video' ? savedMessage.content : undefined,
         delivered_at: null,
         seen_at: null,
         seen_by_user_id: null,
@@ -397,7 +410,11 @@ io.on("connection", (socket) => {
         thumbnailUrl: savedMessage.thumbnail_url,
         imageWidth: savedMessage.image_width,
         imageHeight: savedMessage.image_height,
-        caption: messageType === 'image' ? savedMessage.content : undefined,
+        videoDuration: savedMessage.video_duration,
+        videoWidth: savedMessage.video_width,
+        videoHeight: savedMessage.video_height,
+        videoBitrate: savedMessage.video_bitrate,
+        caption: messageType === 'image' || messageType === 'video' ? savedMessage.content : undefined,
         delivered_at: null,
         seen_at: null,
         seen_by_user_id: null,
@@ -510,6 +527,55 @@ io.on("connection", (socket) => {
 
     console.log(
       `Image message broadcasted: ${messageId} from ${userId} in room ${roomId}`
+    );
+  });
+
+  // Video message specific event for real-time broadcasting
+  socket.on("video-message", (data) => {
+    const {
+      roomId,
+      messageId,
+      userId,
+      fileUrl,
+      thumbnailUrl,
+      fileName,
+      fileSize,
+      duration,
+      videoDuration,
+      videoWidth,
+      videoHeight,
+      videoBitrate,
+      caption,
+      timestamp,
+      tempId,
+    } = data;
+
+    if (!roomId || !messageId || !userId || !fileUrl) {
+      console.error("Missing required data for video-message:", data);
+      return;
+    }
+
+    // Broadcast video message to all users in the room except sender
+    socket.to(roomId).emit("video-message", {
+      messageId,
+      userId,
+      fileUrl,
+      thumbnailUrl,
+      fileName,
+      fileSize,
+      duration,
+      videoDuration,
+      videoWidth,
+      videoHeight,
+      videoBitrate,
+      caption,
+      timestamp,
+      tempId,
+      roomId,
+    });
+
+    console.log(
+      `Video message broadcasted: ${messageId} from ${userId} in room ${roomId}`
     );
   });
 

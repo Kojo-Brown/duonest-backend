@@ -40,4 +40,8 @@ export interface Message {
   seen_by_user_id?: string;
   image_width?: number;
   image_height?: number;
+  video_duration?: number;
+  video_width?: number;
+  video_height?: number;
+  video_bitrate?: number;
 }

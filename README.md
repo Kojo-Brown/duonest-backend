@@ -9,7 +9,7 @@ A real-time chat application backend built with Node.js, Express, Socket.io, and
 - **Real-time messaging** with Socket.io
 - **Message delivery & read receipts** with status tracking
 - **Message persistence** in PostgreSQL database
-- **Media support** - text, images, videos, files, **voice messages**, locations
+- **Media support** - text, images, **videos**, files, **voice messages**, locations
 - **Message types** - replies, forwards, emoji reactions, system messages
 - **Disappearing messages** with expiration timestamps
 - **View-once messages** for sensitive content
@@ -29,6 +29,16 @@ A real-time chat application backend built with Node.js, Express, Socket.io, and
 - **Duration tracking** - Automatic duration calculation and storage
 - **Real-time broadcasting** - Voice messages appear instantly via Socket.io
 - **Static file serving** - Optimized audio file delivery with proper headers
+
+### 🎥 **Video Messages**
+
+- **Video upload** - Upload and send video files up to 100MB
+- **Format support** - MP4, MOV, AVI, WebM, MKV, FLV, M4V, 3GP
+- **Automatic thumbnails** - Generated at 1-second mark using ffmpeg
+- **Metadata extraction** - Duration, resolution, bitrate automatically detected
+- **Video compression** - Smart thumbnail generation (320x240) for quick previews
+- **Real-time delivery** - Videos broadcast instantly with metadata via Socket.io
+- **Static serving** - Optimized video and thumbnail delivery with proper CORS
 
 ### 👥 **User Management**
 
@@ -60,6 +70,7 @@ A real-time chat application backend built with Node.js, Express, Socket.io, and
 - **Framework**: Express.js
 - **Real-time**: Socket.io
 - **Database**: PostgreSQL with connection pooling
+- **File Processing**: Sharp (images), ffmpeg (videos), Multer (uploads)
 - **Security**: Helmet, CORS, rate limiting
 - **Development**: tsx for hot reloading
 
@@ -67,6 +78,7 @@ A real-time chat application backend built with Node.js, Express, Socket.io, and
 
 - Node.js 18+
 - PostgreSQL 12+
+- FFmpeg (for video processing)
 - npm or yarn
 
 ## ⚡ Quick Start
@@ -135,6 +147,13 @@ A real-time chat application backend built with Node.js, Express, Socket.io, and
 - `POST /api/u/:userId/upload-voice/:roomId` - Upload voice message to specific room
 - `GET /uploads/voice/:filename` - Access voice message files (static serving)
 
+### **Video Messages**
+
+- `POST /api/video-message` - Upload video message (alternative endpoint)
+- `POST /api/u/:userId/upload-video/:roomId` - Upload video message to specific room
+- `GET /uploads/videos/:filename` - Access video files (static serving)
+- `GET /uploads/videos/thumbnails/:filename` - Access video thumbnails (static serving)
+
 ### **Recent Chats**
 
 - `GET /api/recent-chats/:userId` - Get user's recent chats
@@ -161,6 +180,8 @@ A real-time chat application backend built with Node.js, Express, Socket.io, and
 - `message-delivered` - Delivery receipt
 - `message-seen` - Read receipt
 - `voice-message` - Broadcast voice message to room participants
+- `image-message` - Broadcast image message to room participants
+- `video-message` - Broadcast video message to room participants
 
 ### **Live Typing**
 
@@ -235,6 +256,26 @@ staticServing: '/uploads',     // Public URL path
 cors: 'cross-origin'          // CORS policy for audio files
 ```
 
+### **Video Messages**
+
+```javascript
+// File upload limits
+fileSize: 100 * 1024 * 1024,   // 100MB max file size
+files: 1,                      // One file per upload
+formats: ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/webm']
+
+// Processing configuration
+thumbnailSize: '320x240',      // Thumbnail dimensions
+thumbnailTime: 1,              // Generate thumbnail at 1 second
+ffmpegPath: 'ffmpeg',         // FFmpeg binary path
+
+// Storage configuration
+uploadDir: './uploads/videos', // Local storage directory
+thumbnailDir: './uploads/videos/thumbnails', // Thumbnail storage
+staticServing: '/uploads',     // Public URL path
+cors: 'cross-origin'          // CORS policy for video files
+```
+
 ## 🧪 Testing
 
 ### **Manual API Testing**
@@ -287,8 +328,18 @@ npm run dev
 
 ### 🔄 **Recent Updates**
 
+#### **Latest: Video Messages (v2.1.0)**
+- **Video upload & processing** - Full video recording, upload, and streaming with ffmpeg
+- **Automatic thumbnail generation** - Smart thumbnail creation at optimal timestamps
+- **Video metadata extraction** - Duration, resolution, bitrate automatically detected
+- **Multi-format support** - MP4, MOV, AVI, WebM, MKV, FLV, M4V, 3GP compatibility
+- **Database schema updates** - New video-specific fields and optimized storage
+- **Real-time video broadcasting** - Instant video sharing via Socket.io events
+
+#### **Previous Updates**
 - **Voice message support** - Full audio recording, upload, and playback
-- **Cross-origin audio access** - Fixed CORS issues for voice file serving
+- **Image message support** - Upload, compression, and thumbnail generation
+- **Cross-origin media access** - Fixed CORS issues for media file serving
 - **File upload middleware** - Multer integration with size limits and validation
 - **Static file optimization** - Proper headers and rate limiting bypass
 - Added live typing with keystroke-level updates
@@ -329,4 +380,4 @@ For issues or questions:
 
 ---
 
-**DuoNest Backend** - Real-time chat with live typing and advanced messaging features! 🚀
+**DuoNest Backend** - Real-time chat with live typing, video/voice messages, and advanced multimedia features! 🚀📹🎙️
