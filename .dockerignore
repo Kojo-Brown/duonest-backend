@@ -1,0 +1,16 @@
+node_modules
+dist
+.git
+.gitignore
+.env
+.env.local
+.env.example
+README.md
+uploads
+*.log
+.DS_Store
+Thumbs.db
+server_new.log
+server.log
+server.pid
+test-recent-chats.js
