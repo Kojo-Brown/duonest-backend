@@ -11,7 +11,7 @@ export class MessageService {
     file_url?: string;
     file_name?: string;
     file_size?: number;
-    thumbnail_url?: string;
+    thumbnail_url?: string | null;
     duration?: number;
     reply_to_message_id?: number;
     location_lat?: number;

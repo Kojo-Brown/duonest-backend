@@ -4,6 +4,12 @@ import fs from 'fs';
 import sharp from 'sharp';
 import ffmpeg from 'fluent-ffmpeg';
 
+// Set FFmpeg paths for Docker/production environment
+if (process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT) {
+  ffmpeg.setFfmpegPath('/usr/bin/ffmpeg');
+  ffmpeg.setFfprobePath('/usr/bin/ffprobe');
+}
+
 // Configure storage for voice message uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -202,11 +208,11 @@ export const videoUpload = multer({
 // Video processing function
 export const processVideo = async (inputPath: string, outputDir: string, filename: string): Promise<{
   originalPath: string;
-  thumbnailPath: string;
+  thumbnailPath: string | null;
   duration: number;
   width: number;
   height: number;
-  thumbnailFilename: string;
+  thumbnailFilename: string | null;
   bitrate: number;
 }> => {
   const nameWithoutExt = path.parse(filename).name;
@@ -221,7 +227,17 @@ export const processVideo = async (inputPath: string, outputDir: string, filenam
     // Get video metadata first
     ffmpeg.ffprobe(inputPath, (err, metadata) => {
       if (err) {
-        reject(new Error(`Failed to get video metadata: ${err.message}`));
+        console.warn(`FFmpeg probe failed: ${err.message}. Using fallback without metadata.`);
+        // Fallback without metadata extraction
+        resolve({
+          originalPath: inputPath,
+          thumbnailPath: null,
+          duration: 0,
+          width: 1920,
+          height: 1080,
+          thumbnailFilename: null,
+          bitrate: 0
+        });
         return;
       }
 

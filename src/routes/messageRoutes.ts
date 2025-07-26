@@ -439,7 +439,9 @@ router.post('/u/:userId/upload-video/:roomId', validateUserId, videoUpload.singl
       file_url: `${baseUrl}/uploads/videos/${videoFile.filename}`,
       file_name: videoFile.filename,
       file_size: videoFile.size,
-      thumbnail_url: `${baseUrl}/uploads/videos/thumbnails/${processedVideo.thumbnailFilename}`,
+      thumbnail_url: processedVideo.thumbnailFilename 
+        ? `${baseUrl}/uploads/videos/thumbnails/${processedVideo.thumbnailFilename}`
+        : null,
       duration: Number(processedVideo.duration),
       video_duration: Number(processedVideo.duration),
       video_width: Number(processedVideo.width),
@@ -451,7 +453,9 @@ router.post('/u/:userId/upload-video/:roomId', validateUserId, videoUpload.singl
       success: true,
       messageId: message.id,
       file_url: `${baseUrl}/uploads/videos/${videoFile.filename}`,
-      thumbnail_url: `${baseUrl}/uploads/videos/thumbnails/${processedVideo.thumbnailFilename}`,
+      thumbnail_url: processedVideo.thumbnailFilename 
+        ? `${baseUrl}/uploads/videos/thumbnails/${processedVideo.thumbnailFilename}`
+        : null,
       file_name: videoFile.filename,
       file_size: videoFile.size,
       duration: processedVideo.duration,
@@ -510,7 +514,9 @@ router.post('/video-message', videoUpload.single('video'), handleVideoUploadErro
       file_url: `${baseUrl}/uploads/videos/${videoFile.filename}`,
       file_name: videoFile.filename,
       file_size: videoFile.size,
-      thumbnail_url: `${baseUrl}/uploads/videos/thumbnails/${processedVideo.thumbnailFilename}`,
+      thumbnail_url: processedVideo.thumbnailFilename 
+        ? `${baseUrl}/uploads/videos/thumbnails/${processedVideo.thumbnailFilename}`
+        : null,
       duration: Number(processedVideo.duration),
       video_duration: Number(processedVideo.duration),
       video_width: Number(processedVideo.width),
@@ -522,7 +528,9 @@ router.post('/video-message', videoUpload.single('video'), handleVideoUploadErro
       success: true,
       messageId: message.id,
       file_url: `${baseUrl}/uploads/videos/${videoFile.filename}`,
-      thumbnail_url: `${baseUrl}/uploads/videos/thumbnails/${processedVideo.thumbnailFilename}`,
+      thumbnail_url: processedVideo.thumbnailFilename 
+        ? `${baseUrl}/uploads/videos/thumbnails/${processedVideo.thumbnailFilename}`
+        : null,
       file_name: videoFile.filename,
       file_size: videoFile.size,
       duration: processedVideo.duration,
