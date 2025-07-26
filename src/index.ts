@@ -155,6 +155,7 @@ app.get("/", (req, res) => {
       markSeen: "/api/u/:userId/mark-messages-seen/:roomId",
       deleteMessage: "/api/u/:userId/message/:messageId",
       uploadVoice: "/api/u/:userId/upload-voice/:roomId",
+      uploadImage: "/api/u/:userId/upload-image/:roomId",
       recentChats: "/api/recent-chats/:userId",
       addRecentChat: "/api/recent-chats",
       updateRecentChat: "/api/recent-chats/:userId/:roomId",
@@ -312,6 +313,10 @@ io.on("connection", (socket) => {
         fileName,
         fileSize,
         duration,
+        caption,
+        imageWidth,
+        imageHeight,
+        thumbnailUrl,
       } = data;
 
       // Validate required data
@@ -338,12 +343,15 @@ io.on("connection", (socket) => {
       const savedMessage = await MessageService.saveMessage({
         room_id: roomId,
         sender_id: userId,
-        content: message,
+        content: caption || message,
         message_type: messageType,
         file_url: fileUrl,
         file_name: fileName,
         file_size: fileSize,
         duration: duration,
+        thumbnail_url: thumbnailUrl,
+        image_width: imageWidth,
+        image_height: imageHeight,
       });
 
       console.log(`💾 Message saved - ID: ${savedMessage.id}, Room: ${roomId}`);
@@ -359,6 +367,10 @@ io.on("connection", (socket) => {
         fileName: savedMessage.file_name,
         fileSize: savedMessage.file_size,
         duration: savedMessage.duration,
+        thumbnailUrl: savedMessage.thumbnail_url,
+        imageWidth: savedMessage.image_width,
+        imageHeight: savedMessage.image_height,
+        caption: messageType === 'image' ? savedMessage.content : undefined,
         delivered_at: null,
         seen_at: null,
         seen_by_user_id: null,
@@ -382,6 +394,10 @@ io.on("connection", (socket) => {
         fileName: savedMessage.file_name,
         fileSize: savedMessage.file_size,
         duration: savedMessage.duration,
+        thumbnailUrl: savedMessage.thumbnail_url,
+        imageWidth: savedMessage.image_width,
+        imageHeight: savedMessage.image_height,
+        caption: messageType === 'image' ? savedMessage.content : undefined,
         delivered_at: null,
         seen_at: null,
         seen_by_user_id: null,
@@ -451,6 +467,49 @@ io.on("connection", (socket) => {
 
     console.log(
       `Voice message broadcasted: ${messageId} from ${userId} in room ${roomId}`
+    );
+  });
+
+  // Image message specific event for real-time broadcasting
+  socket.on("image-message", (data) => {
+    const {
+      roomId,
+      messageId,
+      userId,
+      fileUrl,
+      thumbnailUrl,
+      fileName,
+      fileSize,
+      imageWidth,
+      imageHeight,
+      caption,
+      timestamp,
+      tempId,
+    } = data;
+
+    if (!roomId || !messageId || !userId || !fileUrl) {
+      console.error("Missing required data for image-message:", data);
+      return;
+    }
+
+    // Broadcast image message to all users in the room except sender
+    socket.to(roomId).emit("image-message", {
+      messageId,
+      userId,
+      fileUrl,
+      thumbnailUrl,
+      fileName,
+      fileSize,
+      imageWidth,
+      imageHeight,
+      caption,
+      timestamp,
+      tempId,
+      roomId,
+    });
+
+    console.log(
+      `Image message broadcasted: ${messageId} from ${userId} in room ${roomId}`
     );
   });
 

@@ -38,4 +38,6 @@ export interface Message {
   delivered_at?: Date;
   seen_at?: Date;
   seen_by_user_id?: string;
+  image_width?: number;
+  image_height?: number;
 }

@@ -17,6 +17,8 @@ export class MessageService {
     location_lat?: number;
     location_lng?: number;
     emoji?: string;
+    image_width?: number;
+    image_height?: number;
   }): Promise<Message> {
     const {
       room_id,
@@ -31,20 +33,22 @@ export class MessageService {
       reply_to_message_id,
       location_lat,
       location_lng,
-      emoji
+      emoji,
+      image_width,
+      image_height
     } = messageData;
 
     const result = await query(
       `INSERT INTO messages (
         room_id, sender_id, content, message_type, file_url, file_name, 
         file_size, thumbnail_url, duration, reply_to_message_id,
-        location_lat, location_lng, emoji, created_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW()) 
+        location_lat, location_lng, emoji, image_width, image_height, created_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW()) 
       RETURNING *`,
       [
         room_id, sender_id, content, message_type, file_url, file_name,
         file_size, thumbnail_url, duration, reply_to_message_id,
-        location_lat, location_lng, emoji
+        location_lat, location_lng, emoji, image_width, image_height
       ]
     );
 

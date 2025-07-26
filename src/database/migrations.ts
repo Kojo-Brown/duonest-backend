@@ -1,14 +1,14 @@
-import { readFileSync, existsSync } from 'fs';
-import { join, dirname, resolve } from 'path';
-import { fileURLToPath } from 'url';
-import { query } from './connection.js';
+import { readFileSync, existsSync } from "fs";
+import { join, dirname, resolve } from "path";
+import { fileURLToPath } from "url";
+import { query } from "./connection.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export class DatabaseMigrations {
   static async runMigrations(): Promise<void> {
-    console.log('🔄 Running database migrations...');
-    
+    console.log("🔄 Running database migrations...");
+
     try {
       // Create migrations table if it doesn't exist
       await query(`
@@ -21,22 +21,23 @@ export class DatabaseMigrations {
 
       // List of migration files in order
       const migrations = [
-        '001_create_recent_chats.sql',
-        '002_create_live_typing_logs.sql',
-        '003_create_users.sql',
-        '004_create_couple_rooms.sql',
-        '005_add_users_foreign_key.sql',
-        '006_create_messages.sql',
-        '007_create_functions.sql'
+        "001_create_recent_chats.sql",
+        "002_create_live_typing_logs.sql",
+        "003_create_users.sql",
+        "004_create_couple_rooms.sql",
+        "005_add_users_foreign_key.sql",
+        "006_create_messages.sql",
+        "007_create_functions.sql",
+        "008_add_image_fields.sql",
       ];
 
       for (const migrationFile of migrations) {
         await this.runMigration(migrationFile);
       }
 
-      console.log('✅ All migrations completed successfully');
+      console.log("✅ All migrations completed successfully");
     } catch (error) {
-      console.error('❌ Migration failed:', error);
+      console.error("❌ Migration failed:", error);
       throw error;
     }
   }
@@ -45,7 +46,7 @@ export class DatabaseMigrations {
     try {
       // Check if migration already executed
       const checkResult = await query(
-        'SELECT id FROM migrations WHERE name = $1',
+        "SELECT id FROM migrations WHERE name = $1",
         [filename]
       );
 
@@ -57,20 +58,20 @@ export class DatabaseMigrations {
       console.log(`🔧 Running migration: ${filename}`);
 
       // For recent_chats migration, execute SQL statements individually
-      if (filename === '001_create_recent_chats.sql') {
+      if (filename === "001_create_recent_chats.sql") {
         await this.createRecentChatsTable();
-      } else if (filename === '002_create_live_typing_logs.sql') {
+      } else if (filename === "002_create_live_typing_logs.sql") {
         await this.createLiveTypingLogsTable();
       } else {
         // Read migration file for other migrations
         // Try multiple possible paths to handle different execution environments
         const possiblePaths = [
-          join(__dirname, 'migrations', filename),
-          join(__dirname, '..', 'database', 'migrations', filename),
-          join(process.cwd(), 'dist', 'database', 'migrations', filename),
-          join(process.cwd(), 'src', 'database', 'migrations', filename)
+          join(__dirname, "migrations", filename),
+          join(__dirname, "..", "database", "migrations", filename),
+          join(process.cwd(), "dist", "database", "migrations", filename),
+          join(process.cwd(), "src", "database", "migrations", filename),
         ];
-        
+
         let migrationPath: string | null = null;
         for (const path of possiblePaths) {
           if (existsSync(path)) {
@@ -78,21 +79,22 @@ export class DatabaseMigrations {
             break;
           }
         }
-        
+
         if (!migrationPath) {
-          throw new Error(`Migration file ${filename} not found. Tried paths: ${possiblePaths.join(', ')}`);
+          throw new Error(
+            `Migration file ${filename} not found. Tried paths: ${possiblePaths.join(
+              ", "
+            )}`
+          );
         }
-        
+
         console.log(`📁 Reading migration from: ${migrationPath}`);
-        const migrationSQL = readFileSync(migrationPath, 'utf8');
+        const migrationSQL = readFileSync(migrationPath, "utf8");
         await query(migrationSQL);
       }
 
       // Record migration as executed
-      await query(
-        'INSERT INTO migrations (name) VALUES ($1)',
-        [filename]
-      );
+      await query("INSERT INTO migrations (name) VALUES ($1)", [filename]);
 
       console.log(`✅ Migration ${filename} completed`);
     } catch (error) {
@@ -125,8 +127,8 @@ export class DatabaseMigrations {
       `);
     } catch (error) {
       // Constraint might already exist, ignore error
-      if (error instanceof Error && !error.message.includes('already exists')) {
-        console.log('⚠️  Unique constraint might already exist, continuing...');
+      if (error instanceof Error && !error.message.includes("already exists")) {
+        console.log("⚠️  Unique constraint might already exist, continuing...");
       }
     }
 
@@ -138,7 +140,7 @@ export class DatabaseMigrations {
       `);
     } catch (error) {
       // Index might already exist, ignore error
-      console.log('⚠️  Index might already exist, continuing...');
+      console.log("⚠️  Index might already exist, continuing...");
     }
 
     // Create update trigger function
@@ -151,7 +153,9 @@ export class DatabaseMigrations {
     `);
 
     // Create trigger
-    await query(`DROP TRIGGER IF EXISTS recent_chats_updated_at_trigger ON recent_chats`);
+    await query(
+      `DROP TRIGGER IF EXISTS recent_chats_updated_at_trigger ON recent_chats`
+    );
     await query(`
       CREATE TRIGGER recent_chats_updated_at_trigger
         BEFORE UPDATE ON recent_chats
@@ -186,7 +190,7 @@ export class DatabaseMigrations {
         ON live_typing_logs(created_at)
       `);
     } catch (error) {
-      console.log('⚠️  Live typing indexes might already exist, continuing...');
+      console.log("⚠️  Live typing indexes might already exist, continuing...");
     }
   }
 
@@ -200,19 +204,19 @@ export class DatabaseMigrations {
       `);
       return result.rows[0].exists;
     } catch (error) {
-      console.error('Error checking recent_chats table:', error);
+      console.error("Error checking recent_chats table:", error);
       return false;
     }
   }
 
   static async createRecentChatsTableIfNotExists(): Promise<void> {
     const tableExists = await this.checkRecentChatsTable();
-    
+
     if (!tableExists) {
-      console.log('🔧 Creating recent_chats table...');
-      await this.runMigration('001_create_recent_chats.sql');
+      console.log("🔧 Creating recent_chats table...");
+      await this.runMigration("001_create_recent_chats.sql");
     } else {
-      console.log('✅ recent_chats table already exists');
+      console.log("✅ recent_chats table already exists");
     }
   }
 }
